@@ -1,0 +1,105 @@
+﻿@page "/wfa"
+
+<h3>WFA</h3>
+
+<div class="container gender-container">
+    <div class="@(IsMale ? "male active" : "male")" @onclick="() => SetGender(true)">
+        <p>Male</p>
+    </div>
+    <div class="@(!IsMale ? "female active" : "female")" @onclick="() => SetGender(false)">
+        <p>Female</p>
+    </div>
+</div>
+
+<div class="container">
+    <p class="col p-0 m-0">Age (months)</p>
+    <p class="col">Weight (kg)</p>
+    <input class="col" style="height:50px" type="number" @bind="month" @bind:event="oninput" placeholder="age (months)" />
+    <input class="col" style="height:50px" type="number" @bind="weight" @bind:event="oninput" placeholder="weight (kg)" />
+    <button @onclick="CheckWeightCategory" class="btn btn-primary col-12 mt-1">Check</button>
+</div>
+
+<p>Weight Category: @weightCategory</p>
+
+
+@if (weightForAge != null)
+{
+    <ul>
+        <li>
+            Month: @weightForAge.Month<br />
+            -3 SD: @weightForAge.SD1neg<br />
+            -2 SD: @weightForAge.SD2neg<br />
+            -1 SD: @weightForAge.SD3neg<br />
+            Median: @weightForAge.SD0<br />
+            +1 SD: @weightForAge.SD1<br />
+            +2 SD: @weightForAge.SD2<br />
+            +3 SD: @weightForAge.SD3
+        </li>
+    </ul>
+}
+
+@code {
+    private List<WeightForAge> weightForAgeList = new List<WeightForAge>();
+    private int month;
+    private double weight;
+    private bool IsMale = false;
+    private string? weightCategory;
+    private WeightForAge? weightForAge;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var fileStream = await FileSystem.OpenAppPackageFileAsync("WFA_0-5_GIRLS.json");
+        using var reader = new StreamReader(fileStream);
+        var json = await reader.ReadToEndAsync();
+        weightForAgeList = System.Text.Json.JsonSerializer.Deserialize<List<WeightForAge>>(json)!;
+    }
+
+    private void CheckWeightCategory()
+    {
+        var ageData = weightForAgeList.FirstOrDefault(w => w.Month == month);
+        weightForAge = ageData;
+        if (ageData != null)
+        {
+            weightCategory = DetermineWeightCategory(weight, ageData);
+        }
+        else
+        {
+            weightCategory = "Data not available for the specified age.";
+        }
+    }
+
+    private string DetermineWeightCategory(double weight, WeightForAge ageData)
+    {
+        switch (weight)
+        {
+            case var _ when weight < ageData.SD3neg:
+                return "Severely Underweight";
+            case var _ when weight < ageData.SD2neg:
+                return "Underweight";
+            case var _ when weight < ageData.SD1:
+                Console.WriteLine(ageData.SD2);
+                return "Normal";
+            case var _ when weight < ageData.SD2:
+                return "Overweight";
+            default:
+                return "Obese";
+        }
+    }
+
+    private void SetGender(bool isMale)
+    {
+        IsMale = isMale;
+    }
+
+    private class WeightForAge
+    {
+        public int Month { get; set; }
+        public double SD3neg { get; set; }
+        public double SD2neg { get; set; }
+        public double SD1neg { get; set; }
+        public double SD0 { get; set; }
+        public double SD1 { get; set; }
+        public double SD2 { get; set; }
+        public double SD3 { get; set; }
+    }
+}

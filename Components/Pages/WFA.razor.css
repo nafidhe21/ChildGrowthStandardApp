@@ -1,0 +1,40 @@
+﻿* {
+    margin: 0px;
+    padding: 0px;
+    box-sizing: border-box;
+}
+
+.gender-container {
+    display: flex;
+}
+
+.container {
+    margin-left: 15px;
+    margin-right: 15px;
+}
+
+.male, .female {
+    width: 50%;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    text-align: center;
+    flex-direction: column;
+    margin: 0.5em;
+    border: 2px lightgray solid;
+    border-radius: 9px;
+}
+
+.active {
+    color: #0d6efd;
+    border: 2px #0d6efd solid;
+}
+
+p {
+    padding: 0;
+    margin: 0;
+}
+
+input {
+    height: 50px;
+}
