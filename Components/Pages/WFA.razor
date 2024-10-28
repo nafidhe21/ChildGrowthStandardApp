@@ -2,20 +2,26 @@
 
 <h3>WFA</h3>
 
-<div class="container gender-container">
+<div class="container">
     <div class="@(IsMale ? "male active" : "male")" @onclick="() => SetGender(true)">
         <p>Male</p>
     </div>
     <div class="@(!IsMale ? "female active" : "female")" @onclick="() => SetGender(false)">
         <p>Female</p>
     </div>
-</div>
 
-<div class="container">
-    <p class="col p-0 m-0">Age (months)</p>
-    <p class="col">Weight (kg)</p>
-    <input class="col" style="height:50px" type="number" @bind="month" @bind:event="oninput" placeholder="age (months)" />
-    <input class="col" style="height:50px" type="number" @bind="weight" @bind:event="oninput" placeholder="weight (kg)" />
+    <div class="input-container">
+        <p class="input-desc">Tahun :</p>
+        <input class="input-value" type="number" @bind="year" @bind:event="oninput" placeholder="tahun" />
+    </div>
+    <div class="input-container">
+        <p class="input-desc">Bulan :</p>
+        <input class="input-value" type="number" @bind="month" @bind:event="oninput" placeholder="bulan" />
+    </div>
+    <div class="input-container weight-container">
+        <p class="input-desc single">Weight (kg)</p>
+        <input class="input-value single" type="number" @bind="weight" @bind:event="oninput" placeholder="weight (kg)" />
+    </div>
     <button @onclick="CheckWeightCategory" class="btn btn-primary col-12 mt-1">Check</button>
 </div>
 
@@ -40,8 +46,10 @@
 
 @code {
     private List<WeightForAge> weightForAgeList = new List<WeightForAge>();
-    private int month;
-    private double weight;
+    private int totalMonth = 0;
+    private int year = 0;
+    private int month = 0;
+    private double weight = 0.0;
     private bool IsMale = false;
     private string? weightCategory;
     private WeightForAge? weightForAge;
@@ -54,9 +62,15 @@
         weightForAgeList = System.Text.Json.JsonSerializer.Deserialize<List<WeightForAge>>(json)!;
     }
 
+    private void GetTotalMonth()
+    {
+        totalMonth = (year * 12) + month;
+    }
+
     private void CheckWeightCategory()
     {
-        var ageData = weightForAgeList.FirstOrDefault(w => w.Month == month);
+        GetTotalMonth();
+        var ageData = weightForAgeList.FirstOrDefault(w => w.Month == totalMonth);
         weightForAge = ageData;
         if (ageData != null)
         {
@@ -88,7 +102,16 @@
 
     private void SetGender(bool isMale)
     {
+        ResetField();
         IsMale = isMale;
+    }
+
+    private void ResetField()
+    {
+        month = 0;
+        year = 0;
+        totalMonth = 0;
+        weight = 0.0;
     }
 
     private class WeightForAge
