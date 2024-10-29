@@ -12,15 +12,15 @@
 
     <div class="input-container">
         <p class="input-desc">Tahun :</p>
-        <input class="input-value" type="number" @bind="year" @bind:event="oninput" placeholder="tahun" />
+        <input class="input-value" type="number" @bind-value="year" @bind-value:event="oninput" @bind-value:after="ValidateInput" placeholder="tahun" />
     </div>
     <div class="input-container">
         <p class="input-desc">Bulan :</p>
-        <input class="input-value" type="number" @bind="month" @bind:event="oninput" placeholder="bulan" />
+        <input class="input-value" type="number" @bind-value="month" @bind-value:event="oninput" @bind-value:after="ValidateInput" placeholder="bulan" />
     </div>
     <div class="input-container weight-container">
         <p class="input-desc single">Weight (kg)</p>
-        <input class="input-value single" type="number" @bind="weight" @bind:event="oninput" placeholder="weight (kg)" />
+        <input class="input-value single" type="number" @bind-value="weight" @bind-value:event="oninput" @bind-value:after="ValidateInput" placeholder="weight (kg)" />
     </div>
     <button @onclick="CheckWeightCategory" class="btn btn-primary col-12 mt-1">Check</button>
 </div>
@@ -33,9 +33,9 @@
     <ul>
         <li>
             Month: @weightForAge.Month<br />
-            -3 SD: @weightForAge.SD1neg<br />
+            -3 SD: @weightForAge.SD3neg<br />
             -2 SD: @weightForAge.SD2neg<br />
-            -1 SD: @weightForAge.SD3neg<br />
+            -1 SD: @weightForAge.SD1neg<br />
             Median: @weightForAge.SD0<br />
             +1 SD: @weightForAge.SD1<br />
             +2 SD: @weightForAge.SD2<br />
@@ -50,7 +50,7 @@
     private int year = 0;
     private int month = 0;
     private double weight = 0.0;
-    private bool IsMale = false;
+    private bool IsMale = true;
     private string? weightCategory;
     private WeightForAge? weightForAge;
 
@@ -80,6 +80,34 @@
         {
             weightCategory = "Data not available for the specified age.";
         }
+    }
+
+    private void ValidateInput()
+    {
+        if (weight < 0) weight = 0;
+
+        if (year < 0) year = 0;
+        if (year > 5)
+        {
+            year = 5;
+            month = 0;
+        }
+        else
+        {
+            if (month < 0) month = 0;
+            if (month >= 12)
+            {
+                year++;
+                month = 0;
+                if (year > 5)
+                {
+                    year = 5;
+                    month = 0;
+                }
+            }
+        }
+
+        StateHasChanged();
     }
 
     private string DetermineWeightCategory(double weight, WeightForAge ageData)
