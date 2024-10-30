@@ -27,21 +27,17 @@
 
 <p>Weight Category: @weightCategory</p>
 
-
 @if (weightForAge != null)
 {
-    <ul>
-        <li>
-            Month: @weightForAge.Month<br />
-            -3 SD: @weightForAge.SD3neg<br />
-            -2 SD: @weightForAge.SD2neg<br />
-            -1 SD: @weightForAge.SD1neg<br />
-            Median: @weightForAge.SD0<br />
-            +1 SD: @weightForAge.SD1<br />
-            +2 SD: @weightForAge.SD2<br />
-            +3 SD: @weightForAge.SD3
-        </li>
-    </ul>
+    <div class="weight-ranges">
+        <span class="weight-text">
+            <p>&lt; @weightForAge.SD3neg kg (Severely Underweight)</p>
+            <p>@weightForAge.SD3neg kg - @weightForAge.SD2neg kg (Underweight)</p>
+            <p>@weightForAge.SD2neg kg - @weightForAge.SD2 kg (Normal) &lt;</p>
+            <p>@weightForAge.SD2 kg - @weightForAge.SD3 kg (Overweight) &lt;</p>
+            <p>&gt; @weightForAge.SD3 kg (Obese)</p>
+        </span>
+    </div>
 }
 
 @code {
