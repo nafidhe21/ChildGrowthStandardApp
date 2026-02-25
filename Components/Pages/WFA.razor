@@ -1,13 +1,13 @@
 ﻿@page "/wfa"
 
-<h3>WFA</h3>
+<h3>Weight For Age</h3>
 
 <div class="container">
-    <div class="@(IsMale ? "male active" : "male")" @onclick="() => SetGender(true)">
-        <p>Male</p>
+    <div class="@(IsMale ? "male active" : "male")" @onclick="async () => await SetGender(true)">
+        <p><i class="fa-solid fa-mars"></i> Male</p>
     </div>
-    <div class="@(!IsMale ? "female active" : "female")" @onclick="() => SetGender(false)">
-        <p>Female</p>
+    <div class="@(!IsMale ? "female active" : "female")" @onclick="async () => await SetGender(false)">
+        <p><i class="fa-solid fa-venus"></i> Female</p>
     </div>
 
     <div class="input-container">
@@ -50,12 +50,24 @@
     private string? weightCategory;
     private WeightForAge? weightForAge;
 
+    private const string JSONWFAGIRLS = "WFA_0-5_GIRLS.json";
+    private const string JSONWFABOYS = "WFA_0-5_BOYS.json";
+
+    private List<WeightForAge>? cachedBoys;
+    private List<WeightForAge>? cachedGirls;
+
     protected override async Task OnInitializedAsync()
     {
-        var fileStream = await FileSystem.OpenAppPackageFileAsync("WFA_0-5_GIRLS.json");
+        cachedBoys = await LoadJson(JSONWFABOYS);
+        weightForAgeList = cachedBoys;
+    }
+
+    private async Task<List<WeightForAge>> LoadJson (string fileName)
+    {
+        var fileStream = await FileSystem.OpenAppPackageFileAsync(fileName);
         using var reader = new StreamReader(fileStream);
         var json = await reader.ReadToEndAsync();
-        weightForAgeList = System.Text.Json.JsonSerializer.Deserialize<List<WeightForAge>>(json)!;
+        return System.Text.Json.JsonSerializer.Deserialize<List<WeightForAge>>(json)!;
     }
 
     private void GetTotalMonth()
@@ -74,7 +86,7 @@
         }
         else
         {
-            weightCategory = "Data not available for the specified age.";
+            weightCategory = "Data not available for the specified age. Cannot be under 0 and over 5 years old.";
         }
     }
 
@@ -124,10 +136,29 @@
         }
     }
 
-    private void SetGender(bool isMale)
+    private async Task SetGender(bool isMale)
     {
+        if (IsMale == isMale)
+            return;
+
         ResetField();
+
         IsMale = isMale;
+
+        if(isMale == true)
+        {
+            if (cachedBoys == null)
+                cachedBoys = await LoadJson(JSONWFABOYS);
+
+            weightForAgeList = cachedBoys;
+        }
+        else
+        {
+            if (cachedGirls == null)
+                cachedGirls = await LoadJson(JSONWFAGIRLS);
+
+            weightForAgeList = cachedGirls;
+        }
     }
 
     private void ResetField()
