@@ -58,6 +58,10 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Content Remove="Resources\Raw\LHFA\lhfa_boys_0_2_zscores.json" />
+      <Content Remove="Resources\Raw\LHFA\lhfa_boys_2_5_zscores.json" />
+      <Content Remove="Resources\Raw\LHFA\lhfa_girls_0_2_zscores.json" />
+      <Content Remove="Resources\Raw\LHFA\lhfa_girls_2_5_zscores.json" />
       <Content Remove="Resources\Raw\WFA_0-5_BOYS.json" />
     </ItemGroup>
 

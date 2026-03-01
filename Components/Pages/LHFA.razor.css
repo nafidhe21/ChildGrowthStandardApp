@@ -4,6 +4,10 @@
     box-sizing: border-box;
 }
 
+h3 {
+    padding-bottom: 10px;
+}
+
 .container {
     margin-left: 5px;
     margin-right: 5px;
@@ -18,14 +22,14 @@
     height: 50px;
 }
 
-.weight-container {
+.height-container {
     grid-column: 1 / -1;
 }
 
 p {
     font-size: 1.2em;
-    padding: 0px;
-    margin: 0px;
+    padding: 0;
+    margin: 0;
     display: inline-block;
     align-self: center;
 }
@@ -49,7 +53,7 @@ button {
 }
 
 .male, .female {
-    margin-top: 15px;
+    margin-top: 2px;
     height: 60px;
     display: flex;
     justify-content: center;
@@ -62,18 +66,47 @@ button {
 .active {
     color: #0d6efd;
     border: 2px #0d6efd solid;
+    background-color: #e8f0fe;
 }
 
-p {
-    padding: 0;
-    margin: 0;
-}
-
-.weight-ranges {
-    margin: 10px 0;
+/* Results */
+.height-ranges {
+    margin: 10px 5px;
     font-size: 16px;
 }
 
-.weight-text {
+.height-text p {
     font-weight: bold;
+    padding: 4px 0;
+    font-size: 1em;
 }
+
+    .height-text p:nth-child(1) {
+        color: #dc3545;
+    }
+    .height-text p:nth-child(2) {
+        color: #fd7e14;
+    }
+    .height-text p:nth-child(3) {
+        color: #198754;
+    }
+    .height-text p:nth-child(4) {
+        color: #0d6efd;
+    }
+
+
+/* Mode buttons (Length / Height) - full width each row */
+.length, .height {
+    grid-column: 1 / -1;
+    margin-top: 2px;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    border: 2px lightgray solid;
+    border-radius: 9px;
+    cursor: pointer;
+}
+
+/* Gender buttons */

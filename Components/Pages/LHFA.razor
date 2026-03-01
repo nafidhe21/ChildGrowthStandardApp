@@ -1,0 +1,152 @@
+﻿@page "/lhfa"
+<h3>@(IsHeight ? "Height for Age" : "Length for Age")</h3>
+
+<div class="container">
+    <div class="@(!IsHeight ? "length active" : "length")" @onclick="() => SetMode(false)">
+        <p><i class="fa-solid">Length 0 - 2 Year</i></p>
+    </div>
+    <div class="@(IsHeight ? "height active" : "height")" @onclick="() => SetMode(true)">
+        <p><i class="fa-solid">Height 2 - 5 Year</i></p>
+    </div>
+
+    <div class="@(IsMale ? "male active" : "male")" @onclick="() => SetGender(true)">
+        <p><i class="fa-solid fa-mars"></i> Male</p>
+    </div>
+    <div class="@(!IsMale ? "female active" : "female")" @onclick="() => SetGender(false)">
+        <p><i class="fa-solid fa-venus"></i> Female</p>
+    </div>
+
+    <div class="input-container">
+        <p class="input-desc">Tahun :</p>
+        <input class="input-value" type="number" @bind-value="year" @bind-value:event="oninput" @bind-value:after="ValidateInput" placeholder="tahun" />
+    </div>
+    <div class="input-container">
+        <p class="input-desc">Bulan :</p>
+        <input class="input-value" type="number" @bind-value="month" @bind-value:event="oninput" @bind-value:after="ValidateInput" placeholder="bulan" />
+    </div>
+    <div class="input-container height-container">
+        <p class="input-desc single">Height (cm)</p>
+        <input class="input-value single" type="number" @bind-value="height" @bind-value:event="oninput" @bind-value:after="ValidateInput" placeholder="height (cm)" />
+    </div>
+    <button @onclick="CheckHeightCategory" class="btn btn-primary col-12 mt-1">Check</button>
+</div>
+
+<p>Height Category: @heightCategory</p>
+
+@if (heightForAge != null)
+{
+    <div class="height-ranges">
+        <span class="height-text">
+            <p>&lt; @heightForAge.SD3neg cm (Severely Stunted)</p>
+            <p>@heightForAge.SD3neg cm - @heightForAge.SD2neg cm (Stunted)</p>
+            <p>@heightForAge.SD2neg cm - @heightForAge.SD3 cm (Normal)</p>
+            <p>&gt; @heightForAge.SD3 cm (Tall)</p>
+        </span>
+    </div>
+}
+
+@code {
+    private static readonly Dictionary<(bool isHeight, bool isMale), string> JsonPaths = new()
+    {
+        { (false, true),  "LHFA/lhfa_boys_0_2_zscores.json" },
+        { (false, false), "LHFA/lhfa_girls_0_2_zscores.json" },
+        { (true,  true),  "LHFA/lhfa_boys_2_5_zscores.json" },
+        { (true,  false), "LHFA/lhfa_girls_2_5_zscores.json" },
+    };
+
+    private readonly Dictionary<(bool, bool), List<HeightForAge>> _cache = new();
+
+    private List<HeightForAge> heightForAgeList = new();
+    private int year, month, totalMonth;
+    private double height;
+    private bool IsHeight, IsMale = true;
+    private string? heightCategory;
+    private HeightForAge? heightForAge;
+
+    protected override async Task OnInitializedAsync()
+    {
+        heightForAgeList = await GetData(IsHeight, IsMale);
+    }
+
+    private async Task<List<HeightForAge>> GetData(bool isHeight, bool isMale)
+    {
+        var key = (isHeight, isMale);
+        if (!_cache.ContainsKey(key))
+        {
+            var path = JsonPaths[key];
+            var stream = await FileSystem.OpenAppPackageFileAsync(path);
+            using var reader = new StreamReader(stream);
+            var json = await reader.ReadToEndAsync();
+            _cache[key] = System.Text.Json.JsonSerializer.Deserialize<List<HeightForAge>>(json)!;
+        }
+        return _cache[key];
+    }
+
+    private async void CheckHeightCategory()
+    {
+        totalMonth = (year * 12) + month;
+        var ageData = heightForAgeList.FirstOrDefault(h => h.Month == totalMonth);
+        heightForAge = ageData;
+        heightCategory = ageData != null
+            ? DetermineHeightCategory(height, ageData)
+            : IsHeight
+                ? "Data not available. Height mode supports 2 - 5 years old."
+                : "Data not available. Length mode supports 0 - 2 years old.";
+    }
+
+    private static string DetermineHeightCategory(double height, HeightForAge d) => height switch
+    {
+        _ when height < d.SD3neg => "Severely Stunted",
+        _ when height < d.SD2neg => "Stunted",
+        _ when height <= d.SD3   => "Normal",
+        _                        => "Tall"
+    };
+
+    private void ValidateInput()
+    {
+        int maxYear = IsHeight ? 5 : 2;
+        height = Math.Max(0, height);
+        year = Math.Max(0, year);
+
+        if (month >= 12) { year++; month = 0; }
+        if (month < 0) month = 0;
+        if (year > maxYear) { year = maxYear; month = 0; }
+
+        StateHasChanged();
+    }
+
+    private async Task SetMode(bool isHeight)
+    {
+        if (IsHeight == isHeight) return;
+        IsHeight = isHeight;
+        await ResetField();
+    }
+
+    private async Task SetGender(bool isMale)
+    {
+        if (IsMale == isMale) return;
+        IsMale = isMale;
+        await ResetField();
+    }
+
+    private async Task ResetField()
+    {
+        month = year = totalMonth = 0;
+        height = 0.0;
+        heightCategory = null;
+        heightForAge = null;
+        heightForAgeList = await GetData(IsHeight, IsMale);
+    }
+
+    private class HeightForAge
+    {
+        public int Month { get; set; }
+        public double SD3neg { get; set; }
+        public double SD2neg { get; set; }
+        public double SD1neg { get; set; }
+        public double SD0 { get; set; }
+        public double SD1 { get; set; }
+        public double SD2 { get; set; }
+        public double SD3 { get; set; }
+    }
+}
