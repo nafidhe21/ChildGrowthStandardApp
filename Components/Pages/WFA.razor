@@ -70,14 +70,9 @@
         return System.Text.Json.JsonSerializer.Deserialize<List<WeightForAge>>(json)!;
     }
 
-    private void GetTotalMonth()
-    {
-        totalMonth = (year * 12) + month;
-    }
-
     private void CheckWeightCategory()
     {
-        GetTotalMonth();
+        totalMonth = (year * 12) + month;
         var ageData = weightForAgeList.FirstOrDefault(w => w.Month == totalMonth);
         weightForAge = ageData;
         if (ageData != null)
@@ -92,27 +87,20 @@
 
     private void ValidateInput()
     {
-        if (weight < 0) weight = 0;
+        int maxYear = 5;
 
-        if (year < 0) year = 0;
-        if (year > 5)
+        weight = Math.Max(0, weight);
+        year = Math.Max(0, year);
+
+        if(month >= 12)
         {
-            year = 5;
-            month = 0;
+            year++; month = 0;
         }
-        else
+        if (month < 0) month = 0;
+        if(year > maxYear)
         {
-            if (month < 0) month = 0;
-            if (month >= 12)
-            {
-                year++;
-                month = 0;
-                if (year > 5)
-                {
-                    year = 5;
-                    month = 0;
-                }
-            }
+            year = maxYear;
+            month = 0;
         }
 
         StateHasChanged();

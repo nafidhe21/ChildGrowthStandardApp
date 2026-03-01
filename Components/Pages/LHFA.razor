@@ -105,12 +105,20 @@
     private void ValidateInput()
     {
         int maxYear = IsHeight ? 5 : 2;
+
         height = Math.Max(0, height);
         year = Math.Max(0, year);
 
-        if (month >= 12) { year++; month = 0; }
+        if(month >= 12)
+        {
+            year++; month = 0;
+        }
         if (month < 0) month = 0;
-        if (year > maxYear) { year = maxYear; month = 0; }
+        if(year > maxYear)
+        {
+            year = maxYear;
+            month = 0;
+        }
 
         StateHasChanged();
     }
