@@ -1,0 +1,142 @@
+﻿@page "/wflh"
+<h3>@(!IsHeight ? "Weight for Length" : "Weight for Height")</h3>
+
+<div class="container">
+    <div class="@(!IsHeight ? "length active" : "length")" @onclick="() => SetMode(false)">
+        <p><i class="fa-solid">Length 0 - 2 Year</i></p>
+    </div>
+    <div class="@(IsHeight ? "height active" : "height")" @onclick="() => SetMode(true)">
+        <p><i class="fa-solid">Height 2 - 5 Year</i></p>
+    </div>
+
+    <div class="@(IsMale ? "male active" : "male")" @onclick="() => SetGender(true)">
+        <p><i class="fa-solid fa-mars"></i> Male</p>
+    </div>
+    <div class="@(!IsMale ? "female active" : "female")" @onclick="() => SetGender(false)">
+        <p><i class="fa-solid fa-venus"></i> Female</p>
+    </div>
+
+    <div class="input-container">
+        <p class="input-desc">Weight (kg) :</p>
+        <input class="input-value" type="number" @bind-value="weight" @bind-value:event="oninput" placeholder="weight (kg)" />
+    </div>
+    <div class="input-container">
+        <p class="input-desc">@(!IsHeight ? "Length (cm)" : "Height (cm)") :</p>
+        <input class="input-value" type="number" @bind-value="heightLength" @bind-value:event="oninput"  placeholder="@(!IsHeight ? "length (cm)" : "height (cm)")" />
+    </div>
+
+    <button @onclick="CheckWeightCategory" class="btn btn-primary col-12 mt-1">Check</button>
+</div>
+
+<p>Weight Category: @weightCategory</p>
+
+@if (currentData != null)
+{
+    <div class="weight-ranges">
+        <span class="weight-text">
+            <p>&lt; @currentData.SD3neg kg (Severely Wasted)</p>
+            <p>@currentData.SD3neg kg - @currentData.SD2neg kg (Wasted)</p>
+            <p>@currentData.SD2neg kg - @currentData.SD1 kg (Normal)</p>
+            <p>@currentData.SD1 kg - @currentData.SD2 kg (Possible Risk of Overweight)</p>
+            <p>@currentData.SD2 kg - @currentData.SD3 kg (Overweight)</p>
+            <p>&gt; @currentData.SD3 kg (Obese)</p>
+        </span>
+    </div>
+}
+
+@code {
+    private static readonly Dictionary<(bool isHeight, bool isMale), string> JsonPaths = new()
+    {
+        { (false, true),  "WFLH/wfl_boys_0_2_zscores.json" },
+        { (false, false), "WFLH/wfl_girls_0_2_zscores.json" },
+        { (true,  true),  "WFLH/wfh_boys_2_5_zscores.json" },
+        { (true,  false), "WFLH/wfh_girls_2_5_zscores.json" },
+    };
+
+    private readonly Dictionary<(bool, bool), List<WFLHData>> _cache = new();
+
+    private List<WFLHData> dataList = new();
+    private double weight, heightLength;
+    private bool IsHeight, IsMale = true;
+    private string? weightCategory;
+    private WFLHData? currentData;
+
+    private const double WeightMin = 0, WeightMax = 50;
+    private double HLMin => IsHeight ? 65 : 45;
+    private double HLMax => IsHeight ? 120 : 110;
+
+    protected override async Task OnInitializedAsync()
+    {
+        dataList = await GetData(IsHeight, IsMale);
+    }
+
+    private async Task<List<WFLHData>> GetData(bool isHeight, bool isMale)
+    {
+        var key = (isHeight, isMale);
+        if (!_cache.ContainsKey(key))
+        {
+            var stream = await FileSystem.OpenAppPackageFileAsync(JsonPaths[key]);
+            using var reader = new StreamReader(stream);
+            _cache[key] = System.Text.Json.JsonSerializer.Deserialize<List<WFLHData>>(await reader.ReadToEndAsync())!;
+        }
+        return _cache[key];
+    }
+
+    private void CheckWeightCategory()
+    {
+        weight = Math.Clamp(weight, WeightMin, WeightMax);
+        heightLength = Math.Clamp(heightLength, HLMin, HLMax);
+
+        var match = dataList.MinBy(d => Math.Abs(d.Measurement - heightLength));
+        currentData = match;
+        weightCategory = match != null
+            ? DetermineWeightCategory(weight, match)
+            : "Data not available.";
+    }
+
+    private static string DetermineWeightCategory(double weight, WFLHData d) => weight switch
+    {
+        _ when weight < d.SD3neg => "Severely Wasted",
+        _ when weight < d.SD2neg => "Wasted",
+        _ when weight <= d.SD1 => "Normal",
+        _ when weight <= d.SD2 => "Possible Risk of Overweight",
+        _ when weight <= d.SD3 => "Overweight",
+        _ => "Obese"
+    };
+
+    private async Task SetMode(bool isHeight)
+    {
+        if (IsHeight == isHeight) return;
+        IsHeight = isHeight;
+        await ResetField();
+    }
+
+    private async Task SetGender(bool isMale)
+    {
+        if (IsMale == isMale) return;
+        IsMale = isMale;
+        await ResetField();
+    }
+
+    private async Task ResetField()
+    {
+        weight = heightLength = 0;
+        weightCategory = null;
+        currentData = null;
+        dataList = await GetData(IsHeight, IsMale);
+    }
+
+    private class WFLHData
+    {
+        public double? Length { get; set; }
+        public double? Height { get; set; }
+        public double Measurement => Length ?? Height ?? 0;
+        public double SD3neg { get; set; }
+        public double SD2neg { get; set; }
+        public double SD1neg { get; set; }
+        public double SD0 { get; set; }
+        public double SD1 { get; set; }
+        public double SD2 { get; set; }
+        public double SD3 { get; set; }
+    }
+}

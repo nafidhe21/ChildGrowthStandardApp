@@ -1,5 +1,35 @@
 ﻿@page "/"
 
-<h1>Hello, world!</h1>
+<div class="home-container">
+    <div class="hero">
+        <h1>Child Growth Monitor</h1>
+        <p class="subtitle">Track and assess child growth based on WHO standards</p>
+    </div>
 
-Welcome to your new app.
+    <div class="cards">
+        <a href="/wfa" class="card">
+            <i class="fa-solid fa-weight-scale"></i>
+            <h3>Weight for Age</h3>
+            <p>Assess if a child's weight is appropriate for their age</p>
+        </a>
+        <a href="/lhfa" class="card">
+            <i class="fa-solid fa-ruler-vertical"></i>
+            <h3>Length / Height for Age</h3>
+            <p>Detect stunting by comparing height or length to age</p>
+        </a>
+        <a href="/wflh" class="card">
+            <i class="fa-solid fa-child"></i>
+            <h3>Weight for Length / Height</h3>
+            <p>Identify wasting or obesity based on weight relative to height</p>
+        </a>
+    </div>
+
+    <div class="source">
+        <p>
+            Based on 
+            <a href="https://www.who.int/tools/child-growth-standards" target="_blank">
+                WHO Child Growth Standards
+            </a>
+        </p>
+    </div>
+</div>
